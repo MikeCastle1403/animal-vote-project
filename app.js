@@ -218,16 +218,41 @@ async function saveVote(animalName) {
 }
 
 // ── Auth Logic ──
-function toggleAuthMode(e) {
-    e.preventDefault();
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').textContent = isLoginMode ? 'Iniciar Sesión' : 'Registrarse';
-    document.getElementById('auth-toggle-link').textContent = isLoginMode ? 'Regístrate' : 'Inicia Sesión';
-    document.getElementById('auth-title').previousSibling.textContent = isLoginMode ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '; // Update the text before the link
-    const pTag = document.getElementById('auth-toggle-link').parentElement;
-    pTag.innerHTML = isLoginMode
-        ? '¿No tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Regístrate</a>'
-        : '¿Ya tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Inicia Sesión</a>';
+function setAuthMode(isLogin) {
+    isLoginMode = isLogin;
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const btn = document.getElementById('auth-submit-btn');
+
+    hideAuthError();
+    hideAuthSuccess();
+
+    if (isLoginMode) {
+        tabLogin.classList.add('active');
+        tabSignup.classList.remove('active');
+        btn.textContent = 'Entrar';
+    } else {
+        tabSignup.classList.add('active');
+        tabLogin.classList.remove('active');
+        btn.textContent = 'Crear Cuenta';
+    }
+}
+
+function getFriendlyError(errorMsg) {
+    const msg = errorMsg.toLowerCase();
+    if (msg.includes('invalid login credentials')) {
+        return 'El correo o la contraseña son incorrectos. ¿Quizás necesitas crear una cuenta primero?';
+    }
+    if (msg.includes('user already registered')) {
+        return 'Ya existe una cuenta con este correo electónico. Por favor, inicia sesión.';
+    }
+    if (msg.includes('password should be')) {
+        return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    if (msg.includes('email rate limit exceeded')) {
+        return 'Has intentado demasiadas veces. Por favor, espera unos minutos.';
+    }
+    return 'Ocurrió un error: ' + errorMsg;
 }
 
 async function handleAuth(e) {
@@ -257,14 +282,20 @@ async function handleAuth(e) {
     const { data, error } = result;
 
     btn.disabled = false;
-    btn.textContent = 'Entrar';
+    btn.textContent = isLoginMode ? 'Entrar' : 'Crear Cuenta';
 
     if (error) {
-        showAuthError(error.message);
+        showAuthError(getFriendlyError(error.message));
     } else {
         // Success
-        if (!isLoginMode && data.user && !data.session) {
-            showAuthError("Please check your email to verify your account.");
+        hideAuthError();
+        if (!isLoginMode) {
+            if (data.user && !data.session) {
+                showAuthError("Revisa tu correo para verificar tu cuenta.");
+            } else {
+                showAuthSuccess("¡Cuenta creada con éxito! Entrando...");
+                document.getElementById('auth-form').reset();
+            }
             return;
         }
         document.getElementById('auth-form').reset();
@@ -283,7 +314,20 @@ function showAuthError(message) {
 
 function hideAuthError() {
     const errDiv = document.getElementById('auth-error');
-    errDiv.style.display = 'none';
+    if (errDiv) errDiv.style.display = 'none';
+}
+
+function showAuthSuccess(message) {
+    const succDiv = document.getElementById('auth-success');
+    if (succDiv) {
+        succDiv.textContent = message;
+        succDiv.style.display = 'block';
+    }
+}
+
+function hideAuthSuccess() {
+    const succDiv = document.getElementById('auth-success');
+    if (succDiv) succDiv.style.display = 'none';
 }
 
 // ── App State Management ──
@@ -310,7 +354,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 });
 
 // ── Global Bindings (For Vercel/Bundler environments) ──
-window.toggleAuthMode = toggleAuthMode;
+window.setAuthMode = setAuthMode;
 window.handleAuth = handleAuth;
 window.handleLogout = handleLogout;
 window.vote = vote;

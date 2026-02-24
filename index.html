@@ -34,16 +34,20 @@
   <!-- Auth Section -->
   <section id="auth-section" class="auth-section">
     <div class="card auth-card">
-      <h2 id="auth-title">Iniciar Sesión</h2>
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" onclick="setAuthMode(true)" type="button">Iniciar Sesión</button>
+        <button id="tab-signup" class="auth-tab" onclick="setAuthMode(false)" type="button">Regístrate</button>
+      </div>
       <form id="auth-form" onsubmit="handleAuth(event)">
         <input type="email" id="auth-email" placeholder="Correo electrónico" required />
-        <input type="password" id="auth-password" placeholder="Contraseña" required />
-        <button type="submit" class="vote-btn" style="width: 100%; margin-top: 1rem;">Entrar</button>
+        <input type="password" id="auth-password" placeholder="Contraseña" required minlength="6" />
+        <button type="submit" id="auth-submit-btn" class="vote-btn"
+          style="width: 100%; margin-top: 1rem;">Entrar</button>
       </form>
-      <p class="auth-toggle">
-        ¿No tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Regístrate</a>
-      </p>
       <div id="auth-error" class="auth-error" style="display: none;"></div>
+      <div id="auth-success" class="auth-error"
+        style="display: none; background: rgba(59, 253, 132, 0.1); color: #3bfd84; border-color: rgba(59, 253, 132, 0.2);">
+      </div>
     </div>
   </section>
 
