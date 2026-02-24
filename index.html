@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
 
   <div class="bg-blobs">
@@ -18,56 +22,80 @@
   </div>
 
   <header>
-    <h1 class="title">¿Qué animal prefieres?</h1>
-    <p class="subtitle">Vota por tu favorito y descubre cuál gana</p>
+    <div class="header-content">
+      <div>
+        <h1 class="title">¿Qué animal prefieres?</h1>
+        <p class="subtitle">Vota por tu favorito y descubre cuál gana</p>
+      </div>
+      <button id="logout-btn" class="logout-btn" style="display: none;" onclick="handleLogout()">Salir</button>
+    </div>
   </header>
 
-  <main class="arena">
-    <!-- Left Card -->
-    <div class="card-wrapper" id="wrapper-left">
-      <div class="card" id="card-left">
-        <div class="card-inner">
-          <div class="animal-emoji" id="emoji-left"></div>
-          <div class="animal-name" id="name-left"></div>
-          <div class="vote-bar-wrap">
-            <div class="vote-bar" id="bar-left"></div>
-          </div>
-          <div class="vote-count" id="count-left">0 votos</div>
-          <button class="vote-btn" id="btn-left" onclick="vote('left')">
-            <span class="btn-icon">❤️</span> Votar
-          </button>
-        </div>
-      </div>
+  <!-- Auth Section -->
+  <section id="auth-section" class="auth-section">
+    <div class="card auth-card">
+      <h2 id="auth-title">Iniciar Sesión</h2>
+      <form id="auth-form" onsubmit="handleAuth(event)">
+        <input type="email" id="auth-email" placeholder="Correo electrónico" required />
+        <input type="password" id="auth-password" placeholder="Contraseña" required />
+        <button type="submit" class="vote-btn" style="width: 100%; margin-top: 1rem;">Entrar</button>
+      </form>
+      <p class="auth-toggle">
+        ¿No tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Regístrate</a>
+      </p>
+      <div id="auth-error" class="auth-error" style="display: none;"></div>
     </div>
-
-    <!-- VS Badge -->
-    <div class="vs-badge">
-      <span>VS</span>
-    </div>
-
-    <!-- Right Card -->
-    <div class="card-wrapper" id="wrapper-right">
-      <div class="card" id="card-right">
-        <div class="card-inner">
-          <div class="animal-emoji" id="emoji-right"></div>
-          <div class="animal-name" id="name-right"></div>
-          <div class="vote-bar-wrap">
-            <div class="vote-bar" id="bar-right"></div>
-          </div>
-          <div class="vote-count" id="count-right">0 votos</div>
-          <button class="vote-btn" id="btn-right" onclick="vote('right')">
-            <span class="btn-icon">❤️</span> Votar
-          </button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <section class="scoreboard">
-    <h2 class="scoreboard-title">🏆 Marcador global</h2>
-    <div class="scores-grid" id="scores-grid"></div>
   </section>
+
+  <div id="app-content" style="display: none;">
+    <main class="arena">
+      <!-- Left Card -->
+      <div class="card-wrapper" id="wrapper-left">
+        <div class="card" id="card-left">
+          <div class="card-inner">
+            <div class="animal-emoji" id="emoji-left"></div>
+            <div class="animal-name" id="name-left"></div>
+            <div class="vote-bar-wrap">
+              <div class="vote-bar" id="bar-left"></div>
+            </div>
+            <div class="vote-count" id="count-left">0 votos</div>
+            <button class="vote-btn" id="btn-left" onclick="vote('left')">
+              <span class="btn-icon">❤️</span> Votar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VS Badge -->
+      <div class="vs-badge">
+        <span>VS</span>
+      </div>
+
+      <!-- Right Card -->
+      <div class="card-wrapper" id="wrapper-right">
+        <div class="card" id="card-right">
+          <div class="card-inner">
+            <div class="animal-emoji" id="emoji-right"></div>
+            <div class="animal-name" id="name-right"></div>
+            <div class="vote-bar-wrap">
+              <div class="vote-bar" id="bar-right"></div>
+            </div>
+            <div class="vote-count" id="count-right">0 votos</div>
+            <button class="vote-btn" id="btn-right" onclick="vote('right')">
+              <span class="btn-icon">❤️</span> Votar
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="scoreboard">
+      <h2 class="scoreboard-title">🏆 Marcador global</h2>
+      <div class="scores-grid" id="scores-grid"></div>
+    </section>
+  </div>
 
   <script src="app.js"></script>
 </body>
+
 </html>

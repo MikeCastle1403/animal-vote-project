@@ -1,3 +1,12 @@
+// ── Supabase Configuration ──
+// TODO: Replace with your actual Supabase Project URL and Anon Key
+const SUPABASE_URL = 'sb_publishable_mPy8VvfjhoILBQngufRAFA_vG1_1SMs';
+const SUPABASE_ANON_KEY = 'sb_publishable_mPy8VvfjhoILBQngufRAFA_vG1_1SMs';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let isLoginMode = true; // Track whether user is logging in or signing up
+let currentUser = null;
+
 // ── 25 Most Popular Animals ──
 const ANIMALS = [
     { name: "Perro", emoji: "🐶" },
@@ -28,6 +37,8 @@ const ANIMALS = [
 ];
 
 // ── State ──
+// Use database to keep track. We define this just to keep tracking state during fetch, 
+// though we'll update it from the DB.
 const votes = {};
 ANIMALS.forEach(a => votes[a.name] = 0);
 
@@ -67,10 +78,11 @@ function updateBar(side) {
 }
 
 // ── Initial load ──
-function initRound() {
+async function initRound() {
     currentPair = getNewPair();
     renderCard('left', currentPair[0]);
     renderCard('right', currentPair[1]);
+    await fetchVotes(); // Load true votes from Supabase
     renderScoreboard();
 }
 
@@ -80,8 +92,13 @@ function vote(side) {
     const loserSide = side === 'left' ? 'right' : 'left';
     const loserIndex = side === 'left' ? 1 : 0;
 
-    // Record vote
-    votes[currentPair[winnerIndex].name]++;
+    const winnerName = currentPair[winnerIndex].name;
+
+    // Record vote locally for instant feedback
+    votes[winnerName]++;
+
+    // Save vote to Supabase
+    saveVote(winnerName);
 
     // Disable buttons during animation
     document.getElementById('btn-left').disabled = true;
@@ -143,5 +160,151 @@ function renderScoreboard() {
     });
 }
 
-// ── Boot ──
-initRound();
+// ── Database (Supabase) Logic ──
+async function fetchVotes() {
+    try {
+        const { data, error } = await supabase
+            .from('animal_votes')
+            .select('name, votes');
+
+        if (error) {
+            console.error('Error fetching votes:', error);
+            return;
+        }
+
+        if (data) {
+            data.forEach(row => {
+                if (votes[row.name] !== undefined) {
+                    votes[row.name] = row.votes;
+                }
+            });
+            // Update UI after fetching
+            updateBar('left');
+            updateBar('right');
+            renderScoreboard();
+        }
+    } catch (error) {
+        console.error('Exception fetching votes:', error);
+    }
+}
+
+async function saveVote(animalName) {
+    try {
+        // Find existing vote count to increment
+        const { data: existingData, error: fetchError } = await supabase
+            .from('animal_votes')
+            .select('votes')
+            .eq('name', animalName)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching vote to update:', fetchError);
+            return;
+        }
+
+        const newCount = (existingData?.votes || 0) + 1;
+
+        const { error: updateError } = await supabase
+            .from('animal_votes')
+            .update({ votes: newCount })
+            .eq('name', animalName);
+
+        if (updateError) {
+            console.error('Error updating vote:', updateError);
+        }
+    } catch (error) {
+        console.error('Exception saving vote:', error);
+    }
+}
+
+// ── Auth Logic ──
+function toggleAuthMode(e) {
+    e.preventDefault();
+    isLoginMode = !isLoginMode;
+    document.getElementById('auth-title').textContent = isLoginMode ? 'Iniciar Sesión' : 'Registrarse';
+    document.getElementById('auth-toggle-link').textContent = isLoginMode ? 'Regístrate' : 'Inicia Sesión';
+    document.getElementById('auth-title').previousSibling.textContent = isLoginMode ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '; // Update the text before the link
+    const pTag = document.getElementById('auth-toggle-link').parentElement;
+    pTag.innerHTML = isLoginMode
+        ? '¿No tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Regístrate</a>'
+        : '¿Ya tienes cuenta? <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Inicia Sesión</a>';
+}
+
+async function handleAuth(e) {
+    e.preventDefault();
+
+    // Check if placeholders are still present
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+        showAuthError("Please configure SUPABASE_URL and SUPABASE_ANON_KEY in app.js");
+        return;
+    }
+
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const btn = document.querySelector('#auth-form button');
+
+    btn.disabled = true;
+    btn.textContent = 'Cargando...';
+    hideAuthError();
+
+    let result;
+    if (isLoginMode) {
+        result = await supabase.auth.signInWithPassword({ email, password });
+    } else {
+        result = await supabase.auth.signUp({ email, password });
+    }
+
+    const { data, error } = result;
+
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+
+    if (error) {
+        showAuthError(error.message);
+    } else {
+        // Success
+        if (!isLoginMode && data.user && !data.session) {
+            showAuthError("Please check your email to verify your account.");
+            return;
+        }
+        document.getElementById('auth-form').reset();
+    }
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut();
+}
+
+function showAuthError(message) {
+    const errDiv = document.getElementById('auth-error');
+    errDiv.textContent = message;
+    errDiv.style.display = 'block';
+}
+
+function hideAuthError() {
+    const errDiv = document.getElementById('auth-error');
+    errDiv.style.display = 'none';
+}
+
+// ── App State Management ──
+supabase.auth.onAuthStateChange((event, session) => {
+    currentUser = session?.user || null;
+
+    const authSection = document.getElementById('auth-section');
+    const appContent = document.getElementById('app-content');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (currentUser) {
+        // Logged In
+        authSection.style.display = 'none';
+        appContent.style.display = 'block';
+        logoutBtn.style.display = 'block';
+        // Initialize once logged in
+        initRound();
+    } else {
+        // Logged Out
+        authSection.style.display = 'flex';
+        appContent.style.display = 'none';
+        logoutBtn.style.display = 'none';
+    }
+});
