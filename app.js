@@ -2,7 +2,7 @@
 // TODO: Replace with your actual Supabase Project URL and Anon Key
 const SUPABASE_URL = 'https://bqtfbuapthewnvtwtbjo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxdGZidWFwdGhld252dHd0YmpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDA0MDAsImV4cCI6MjA4NzQ3NjQwMH0.raSoWzsTDqpexu8vUplkjXyMB6dsjRgDai26Eye7tc8';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isLoginMode = true; // Track whether user is logging in or signing up
 let currentUser = null;
@@ -163,7 +163,7 @@ function renderScoreboard() {
 // ── Database (Supabase) Logic ──
 async function fetchVotes() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('animal_votes')
             .select('name, votes');
 
@@ -191,7 +191,7 @@ async function fetchVotes() {
 async function saveVote(animalName) {
     try {
         // Find existing vote count to increment
-        const { data: existingData, error: fetchError } = await supabase
+        const { data: existingData, error: fetchError } = await supabaseClient
             .from('animal_votes')
             .select('votes')
             .eq('name', animalName)
@@ -204,7 +204,7 @@ async function saveVote(animalName) {
 
         const newCount = (existingData?.votes || 0) + 1;
 
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
             .from('animal_votes')
             .update({ votes: newCount })
             .eq('name', animalName);
@@ -274,9 +274,9 @@ async function handleAuth(e) {
 
     let result;
     if (isLoginMode) {
-        result = await supabase.auth.signInWithPassword({ email, password });
+        result = await supabaseClient.auth.signInWithPassword({ email, password });
     } else {
-        result = await supabase.auth.signUp({ email, password });
+        result = await supabaseClient.auth.signUp({ email, password });
     }
 
     const { data, error } = result;
@@ -303,7 +303,7 @@ async function handleAuth(e) {
 }
 
 async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
 }
 
 function showAuthError(message) {
@@ -331,7 +331,7 @@ function hideAuthSuccess() {
 }
 
 // ── App State Management ──
-supabase.auth.onAuthStateChange((event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
 
     const authSection = document.getElementById('auth-section');
