@@ -1,7 +1,7 @@
 // ── Supabase Configuration ──
 // TODO: Replace with your actual Supabase Project URL and Anon Key
-const SUPABASE_URL = 'sb_publishable_mPy8VvfjhoILBQngufRAFA_vG1_1SMs';
-const SUPABASE_ANON_KEY = 'sb_publishable_mPy8VvfjhoILBQngufRAFA_vG1_1SMs';
+const SUPABASE_URL = 'https://bqtfbuapthewnvtwtbjo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxdGZidWFwdGhld252dHd0YmpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDA0MDAsImV4cCI6MjA4NzQ3NjQwMH0.raSoWzsTDqpexu8vUplkjXyMB6dsjRgDai26Eye7tc8';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isLoginMode = true; // Track whether user is logging in or signing up
