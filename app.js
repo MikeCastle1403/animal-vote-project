@@ -308,3 +308,9 @@ supabase.auth.onAuthStateChange((event, session) => {
         logoutBtn.style.display = 'none';
     }
 });
+
+// ── Global Bindings (For Vercel/Bundler environments) ──
+window.toggleAuthMode = toggleAuthMode;
+window.handleAuth = handleAuth;
+window.handleLogout = handleLogout;
+window.vote = vote;
